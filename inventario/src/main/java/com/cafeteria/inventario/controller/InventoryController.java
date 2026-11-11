@@ -1,11 +1,11 @@
 package com.cafeteria.inventario.controller;
 
+import com.cafeteria.inventario.dto.request.InventoryRequestDTO;
+import com.cafeteria.inventario.dto.response.InventoryResponseDTO;
 import com.cafeteria.inventario.dto.response.ProductDTO;
 import com.cafeteria.inventario.service.InventoryService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/v1/inventory")
@@ -20,5 +20,11 @@ public class InventoryController {
     @GetMapping("/product/{productId}")
     public ProductDTO getProductById(@PathVariable Long productId) {
         return inventoryService.getProductById(productId);
+    }
+
+    @PostMapping
+    public ResponseEntity<InventoryResponseDTO> saveInventory(@RequestBody InventoryRequestDTO inventoryRequestDTO) {
+        InventoryResponseDTO savedInventory = inventoryService.saveInventory(inventoryRequestDTO);
+        return ResponseEntity.ok(savedInventory);
     }
 }
