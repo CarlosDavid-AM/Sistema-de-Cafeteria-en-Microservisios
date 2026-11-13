@@ -13,4 +13,12 @@ public class VentasResponseDTO {
 
     private BigDecimal total;
 
+    public Long getVentaId() { return ventaId; }
+    public void setVentaId(Long ventaId) { this.ventaId = ventaId; }
+
+    public List<DetalleVentaResponseDTO> getDetalles() { return detalles; }
+    public void setDetalles(List<DetalleVentaResponseDTO> detalles) { this.detalles = detalles; }
+
+    public BigDecimal getTotal() { return total; }
+    public void setTotal(BigDecimal total) { this.total = total; }
 }
