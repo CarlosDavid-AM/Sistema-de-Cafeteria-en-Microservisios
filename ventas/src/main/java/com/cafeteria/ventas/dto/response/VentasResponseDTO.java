@@ -11,7 +11,7 @@ public class VentasResponseDTO {
 
     private List<DetalleVentaResponseDTO> detalles;
 
-    private BigDecimal total;
+    private float total;
 
     public Long getVentaId() { return ventaId; }
     public void setVentaId(Long ventaId) { this.ventaId = ventaId; }
@@ -19,6 +19,6 @@ public class VentasResponseDTO {
     public List<DetalleVentaResponseDTO> getDetalles() { return detalles; }
     public void setDetalles(List<DetalleVentaResponseDTO> detalles) { this.detalles = detalles; }
 
-    public BigDecimal getTotal() { return total; }
-    public void setTotal(BigDecimal total) { this.total = total; }
+    public Float getTotal() { return total; }
+    public void setTotal(Float total) { this.total = total; }
 }

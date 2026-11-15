@@ -22,7 +22,7 @@ public class Venta {
     )
     private List<DetalleVenta> detalles;
 
-    private BigDecimal total;
+    private float total;
 
     public Long getVentaId() { return ventaId; }
     public void setVentaId(Long ventaId) { this.ventaId = ventaId; }
@@ -30,6 +30,6 @@ public class Venta {
     public List<DetalleVenta> getDetalles() { return detalles; }
     public void setDetalles(List<DetalleVenta> detalles) { this.detalles = detalles; }
 
-    public BigDecimal getTotal() { return total; }
-    public void setTotal(BigDecimal total) { this.total = total; }
+    public float getTotal() { return total; }
+    public void setTotal(float total) { this.total = total; }
 }

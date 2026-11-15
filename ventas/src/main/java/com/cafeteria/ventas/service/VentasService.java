@@ -27,12 +27,11 @@ public class VentasService {
         this.conversionService = conversionService;
     }
 
+    // Solucuinar el problema de la conversion de List<Venta> a List<VentasResponseDTO>
     @Transactional(readOnly = true)
     public List<VentasResponseDTO> getAll() {
         List<Venta> ventas = ventasRepository.findAll();
-        return ventas.stream()
-                .map(venta -> conversionService.convert(venta, VentasResponseDTO.class))
-                .toList();
+        return conversionService.convert(ventas, List.class);
     }
 
     @Transactional(readOnly = true)
@@ -60,6 +59,8 @@ public class VentasService {
         return conversionService.convert(saved, VentasResponseDTO.class);
     }
 
+    // Recalcular los subtotales y el total de la venta al actualizar
+    // Esto es necesario porque los detalles de la venta pueden cambiar
     @Transactional
     public VentasResponseDTO update(Long id, VentasRequestDTO requestDTO) {
         if (id == null || id <= 0) {
@@ -76,29 +77,12 @@ public class VentasService {
             throw new VentasExceptions(APIError.BAD_FORMAT);
         }
 
-        if (existing.getDetalles() == null) {
-            existing.setDetalles(new ArrayList<>());
-        } else {
-            existing.getDetalles().clear();
+        Venta venta = conversionService.convert(requestDTO, Venta.class);
+        if (venta == null) {
+            throw new VentasExceptions(APIError.BAD_FORMAT);
         }
 
-        if (updatedData.getDetalles() != null) {
-            for (DetalleVenta detalle : updatedData.getDetalles()) {
-                detalle.setVenta(existing);
-                if (detalle.getPrecioUnitario() != null && detalle.getCantidadProducto() != null) {
-                    detalle.setSubtotal(
-                            detalle.getPrecioUnitario()
-                                    .multiply(BigDecimal.valueOf(detalle.getCantidadProducto()))
-                    );
-                }
-                existing.getDetalles().add(detalle);
-            }
-        }
-
-        BigDecimal total = existing.getDetalles().stream()
-                .map(d -> d.getSubtotal() != null ? d.getSubtotal() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        existing.setTotal(total);
+        calcularSubtotalesYTotal(venta);
 
         Venta saved = ventasRepository.save(existing);
         return conversionService.convert(saved, VentasResponseDTO.class);
@@ -126,27 +110,41 @@ public class VentasService {
             if (detalle.getCantidadProducto() == null || detalle.getCantidadProducto() <= 0) {
                 throw new VentasExceptions(APIError.VALIDATION_ERROR);
             }
-            if (detalle.getPrecioUnitario() == null || detalle.getPrecioUnitario().compareTo(BigDecimal.ZERO) <= 0) {
+            if (detalle.getPrecioUnitario() <= 0) {
                 throw new VentasExceptions(APIError.VALIDATION_ERROR);
             }
         }
     }
 
+    // Metodo para calcular los subtotales y el total de la venta V1
+//    private void calcularSubtotalesYTotal(Venta venta) {
+//        if (venta.getDetalles() != null) {
+//            for (DetalleVenta detalle : venta.getDetalles()) {
+//                detalle.setVenta(venta);
+//                if (detalle.getPrecioUnitario() != null && detalle.getCantidadProducto() != null) {
+//                    detalle.setSubtotal(
+//                            detalle.getPrecioUnitario()
+//                                    .multiply(BigDecimal.valueOf(detalle.getCantidadProducto()))
+//                    );
+//                }
+//            }
+//            BigDecimal total = venta.getDetalles().stream()
+//                    .map(d -> d.getSubtotal() != null ? d.getSubtotal() : BigDecimal.ZERO)
+//                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+//            venta.setTotal(total);
+//        }
+//    }
+
+    // Metodo para calcular los subtotales y el total de la venta V2
     private void calcularSubtotalesYTotal(Venta venta) {
-        if (venta.getDetalles() != null) {
-            for (DetalleVenta detalle : venta.getDetalles()) {
-                detalle.setVenta(venta);
-                if (detalle.getPrecioUnitario() != null && detalle.getCantidadProducto() != null) {
-                    detalle.setSubtotal(
-                            detalle.getPrecioUnitario()
-                                    .multiply(BigDecimal.valueOf(detalle.getCantidadProducto()))
-                    );
-                }
-            }
-            BigDecimal total = venta.getDetalles().stream()
-                    .map(d -> d.getSubtotal() != null ? d.getSubtotal() : BigDecimal.ZERO)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            venta.setTotal(total);
-        }
+        float subtotalTotal = (float) venta.getDetalles().stream()
+                .mapToDouble(detalle -> {
+                    detalle.setVenta(venta);
+                    float subtotal = detalle.getPrecioUnitario() * detalle.getCantidadProducto();
+                    detalle.setSubtotal(subtotal);
+                    return subtotal;
+                })
+                .sum();
+        venta.setTotal(subtotalTotal);
     }
 }

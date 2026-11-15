@@ -20,9 +20,9 @@ public class DetalleVenta {
     private Integer cantidadProducto;
 
     @Column(name = "precio_unitario")
-    private BigDecimal precioUnitario;
+    private float precioUnitario;
 
-    private BigDecimal subtotal;
+    private float subtotal;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "venta_id")
@@ -37,11 +37,11 @@ public class DetalleVenta {
     public Integer getCantidadProducto() { return cantidadProducto; }
     public void setCantidadProducto(Integer cantidadProducto) { this.cantidadProducto = cantidadProducto; }
 
-    public BigDecimal getPrecioUnitario() { return precioUnitario; }
-    public void setPrecioUnitario(BigDecimal precioUnitario) { this.precioUnitario = precioUnitario; }
+    public float getPrecioUnitario() { return precioUnitario; }
+    public void setPrecioUnitario(float precioUnitario) { this.precioUnitario = precioUnitario; }
 
-    public BigDecimal getSubtotal() { return subtotal; }
-    public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
+    public float getSubtotal() { return subtotal; }
+    public void setSubtotal(float subtotal) { this.subtotal = subtotal; }
 
     public Venta getVenta() { return venta; }
     public void setVenta(Venta venta) { this.venta = venta; }

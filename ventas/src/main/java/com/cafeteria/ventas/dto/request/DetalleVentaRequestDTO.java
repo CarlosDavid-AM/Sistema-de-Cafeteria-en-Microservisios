@@ -8,7 +8,7 @@ public class DetalleVentaRequestDTO {
 
     private Integer cantidadProducto;
 
-    private BigDecimal precioUnitario;
+    private float precioUnitario;
 
     public Long getProductoId() { return productoId; }
     public void setProductoId(Long productoId) { this.productoId = productoId; }
@@ -16,6 +16,6 @@ public class DetalleVentaRequestDTO {
     public Integer getCantidadProducto() { return cantidadProducto; }
     public void setCantidadProducto(Integer cantidadProducto) { this.cantidadProducto = cantidadProducto; }
 
-    public BigDecimal getPrecioUnitario() { return precioUnitario; }
-    public void setPrecioUnitario(BigDecimal precioUnitario) { this.precioUnitario = precioUnitario; }
+    public float getPrecioUnitario() { return precioUnitario; }
+    public void setPrecioUnitario(float precioUnitario) { this.precioUnitario = precioUnitario; }
 }

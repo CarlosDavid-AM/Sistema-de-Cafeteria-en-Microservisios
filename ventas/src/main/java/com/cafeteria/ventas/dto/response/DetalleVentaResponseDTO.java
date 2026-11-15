@@ -14,9 +14,9 @@ public class DetalleVentaResponseDTO {
 
     private Integer cantidadProducto;
 
-    private BigDecimal precioUnitario;
+    private float precioUnitario;
 
-    private BigDecimal subtotal;
+    private float subtotal;
 
     public Long getDetalleId() { return detalleId; }
     public void setDetalleId(Long detalleId) { this.detalleId = detalleId; }
@@ -30,9 +30,9 @@ public class DetalleVentaResponseDTO {
     public Integer getCantidadProducto() { return cantidadProducto; }
     public void setCantidadProducto(Integer cantidadProducto) { this.cantidadProducto = cantidadProducto; }
 
-    public BigDecimal getPrecioUnitario() { return precioUnitario; }
-    public void setPrecioUnitario(BigDecimal precioUnitario) { this.precioUnitario = precioUnitario; }
+    public Float getPrecioUnitario() { return precioUnitario; }
+    public void setPrecioUnitario(Float precioUnitario) { this.precioUnitario = precioUnitario; }
 
-    public BigDecimal getSubtotal() { return subtotal; }
-    public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
+    public Float getSubtotal() { return subtotal; }
+    public void setSubtotal(Float subtotal) { this.subtotal = subtotal; }
 }
