@@ -2,36 +2,40 @@ package com.cafeteria.ventas.service;
 
 import com.cafeteria.ventas.dto.request.DetalleVentaRequestDTO;
 import com.cafeteria.ventas.dto.request.VentasRequestDTO;
+import com.cafeteria.ventas.dto.response.DetalleVentaResponseDTO;
 import com.cafeteria.ventas.dto.response.VentasResponseDTO;
-import com.cafeteria.ventas.entity.DetalleVenta;
 import com.cafeteria.ventas.entity.Venta;
 import com.cafeteria.ventas.enums.APIError;
 import com.cafeteria.ventas.exceptions.VentasExceptions;
 import com.cafeteria.ventas.repository.VentasRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class VentasService {
 
     private final VentasRepository ventasRepository;
     private final ConversionService conversionService;
+    private final EntityManager entityManager;
 
-    public VentasService(VentasRepository ventasRepository, ConversionService conversionService) {
+    public VentasService(VentasRepository ventasRepository, ConversionService conversionService,
+                         EntityManager entityManager) {
         this.ventasRepository = ventasRepository;
         this.conversionService = conversionService;
+        this.entityManager = entityManager;
     }
 
-    // Solucuinar el problema de la conversion de List<Venta> a List<VentasResponseDTO>
     @Transactional(readOnly = true)
     public List<VentasResponseDTO> getAll() {
-        List<Venta> ventas = ventasRepository.findAll();
-        return conversionService.convert(ventas, List.class);
+        return getVentasResponse(null);
     }
 
     @Transactional(readOnly = true)
@@ -39,9 +43,63 @@ public class VentasService {
         if (id == null || id <= 0) {
             throw new VentasExceptions(APIError.VALIDATION_ERROR);
         }
-        Venta venta = ventasRepository.findById(id)
-                .orElseThrow(() -> new VentasExceptions(APIError.RESOURCE_NOT_FOUND));
-        return conversionService.convert(venta, VentasResponseDTO.class);
+        List<VentasResponseDTO> ventas = getVentasResponse(id);
+        if (ventas.isEmpty()) {
+            throw new VentasExceptions(APIError.RESOURCE_NOT_FOUND);
+        }
+        return ventas.getFirst();
+    }
+
+    private List<VentasResponseDTO> getVentasResponse(Long ventaId) {
+        String filtroVenta = ventaId == null ? "" : " where venta_id = :ventaId";
+        Query ventasQuery = entityManager.createNativeQuery(
+                "select venta_id, coalesce(total, 0) from ventas"
+                        + filtroVenta + " order by venta_id"
+        );
+        if (ventaId != null) {
+            ventasQuery.setParameter("ventaId", ventaId);
+        }
+        List<?> ventaRows = ventasQuery.getResultList();
+        Map<Long, VentasResponseDTO> ventas = new LinkedHashMap<>();
+
+        for (Object result : ventaRows) {
+            Object[] row = (Object[]) result;
+            VentasResponseDTO venta = new VentasResponseDTO();
+            venta.setVentaId(((Number) row[0]).longValue());
+            venta.setTotal(((Number) row[1]).floatValue());
+            venta.setDetalles(new ArrayList<>());
+            ventas.put(venta.getVentaId(), venta);
+        }
+
+        String filtroDetalle = ventaId == null ? "" : " where venta_id = :ventaId";
+        Query detallesQuery = entityManager.createNativeQuery(
+                "select venta_id, detalle_id, producto_id, cantidad_producto, "
+                        + "coalesce(precio_unitario, 0), "
+                        + "coalesce(subtotal, precio_unitario * cantidad_producto, 0) "
+                        + "from detalle_venta" + filtroDetalle + " order by venta_id, detalle_id"
+        );
+        if (ventaId != null) {
+            detallesQuery.setParameter("ventaId", ventaId);
+        }
+        List<?> detalleRows = detallesQuery.getResultList();
+
+        for (Object result : detalleRows) {
+            Object[] row = (Object[]) result;
+            VentasResponseDTO venta = ventas.get(((Number) row[0]).longValue());
+            if (venta == null) {
+                continue;
+            }
+
+            DetalleVentaResponseDTO detalle = new DetalleVentaResponseDTO();
+            detalle.setDetalleId(((Number) row[1]).longValue());
+            detalle.setProductoId(((Number) row[2]).longValue());
+            detalle.setCantidadProducto(row[3] == null ? null : ((Number) row[3]).intValue());
+            detalle.setPrecioUnitario(((Number) row[4]).floatValue());
+            detalle.setSubtotal(((Number) row[5]).floatValue());
+            venta.getDetalles().add(detalle);
+        }
+
+        return new ArrayList<>(ventas.values());
     }
 
     @Transactional
@@ -59,8 +117,6 @@ public class VentasService {
         return conversionService.convert(saved, VentasResponseDTO.class);
     }
 
-    // Recalcular los subtotales y el total de la venta al actualizar
-    // Esto es necesario porque los detalles de la venta pueden cambiar
     @Transactional
     public VentasResponseDTO update(Long id, VentasRequestDTO requestDTO) {
         if (id == null || id <= 0) {
@@ -77,12 +133,13 @@ public class VentasService {
             throw new VentasExceptions(APIError.BAD_FORMAT);
         }
 
-        Venta venta = conversionService.convert(requestDTO, Venta.class);
-        if (venta == null) {
-            throw new VentasExceptions(APIError.BAD_FORMAT);
+        if (existing.getDetalles() == null) {
+            existing.setDetalles(new ArrayList<>());
+        } else {
+            existing.getDetalles().clear();
         }
-
-        calcularSubtotalesYTotal(venta);
+        existing.getDetalles().addAll(updatedData.getDetalles());
+        calcularSubtotalesYTotal(existing);
 
         Venta saved = ventasRepository.save(existing);
         return conversionService.convert(saved, VentasResponseDTO.class);
