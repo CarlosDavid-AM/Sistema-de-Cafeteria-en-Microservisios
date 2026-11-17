@@ -30,19 +30,21 @@ public class VentasController {
         return new ResponseEntity<>(venta, HttpStatus.OK);
     }
 
-//    @PostMapping
-//    public ResponseEntity<VentasResponseDTO> create(@RequestBody VentasRequestDTO requestDTO) {
-//        return ResponseEntity.status(HttpStatus.CREATED).body(ventasService.create(requestDTO));
-//    }
-//
+    @PostMapping
+    public ResponseEntity<VentasResponseDTO> createVentas(@RequestBody VentasRequestDTO ventasRequestDTO) {
+        VentasResponseDTO createdVenta = ventasService.createVentas(ventasRequestDTO);
+        return new ResponseEntity<>(createdVenta, HttpStatus.CREATED);
+    }
+
 //    @PutMapping("/{id}")
 //    public ResponseEntity<VentasResponseDTO> update(@PathVariable Long id, @RequestBody VentasRequestDTO requestDTO) {
 //        return ResponseEntity.ok(ventasService.update(id, requestDTO));
 //    }
-//
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> delete(@PathVariable Long id) {
-//        ventasService.delete(id);
-//        return ResponseEntity.noContent().build();
-//    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        ventasService.deleteVenta(id);
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }

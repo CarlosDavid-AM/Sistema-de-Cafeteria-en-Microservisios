@@ -1,23 +1,17 @@
 package com.cafeteria.ventas.service;
 
-import com.cafeteria.ventas.dto.request.DetalleVentaRequestDTO;
 import com.cafeteria.ventas.dto.request.VentasRequestDTO;
-import com.cafeteria.ventas.dto.response.DetalleVentaResponseDTO;
 import com.cafeteria.ventas.dto.response.VentasResponseDTO;
+import com.cafeteria.ventas.entity.DetalleVenta;
 import com.cafeteria.ventas.entity.Venta;
 import com.cafeteria.ventas.enums.APIError;
 import com.cafeteria.ventas.exceptions.VentasExceptions;
 import com.cafeteria.ventas.repository.VentasRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.Query;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class VentasService {
@@ -42,73 +36,28 @@ public class VentasService {
         return conversionService.convert(venta, VentasResponseDTO.class);
     }
 
-//    private List<VentasResponseDTO> getVentasResponse(Long ventaId) {
-//        String filtroVenta = ventaId == null ? "" : " where venta_id = :ventaId";
-//        Query ventasQuery = entityManager.createNativeQuery(
-//                "select venta_id, coalesce(total, 0) from ventas"
-//                        + filtroVenta + " order by venta_id"
-//        );
-//        if (ventaId != null) {
-//            ventasQuery.setParameter("ventaId", ventaId);
-//        }
-//        List<?> ventaRows = ventasQuery.getResultList();
-//        Map<Long, VentasResponseDTO> ventas = new LinkedHashMap<>();
-//
-//        for (Object result : ventaRows) {
-//            Object[] row = (Object[]) result;
-//            VentasResponseDTO venta = new VentasResponseDTO();
-//            venta.setVentaId(((Number) row[0]).longValue());
-//            venta.setTotal(((Number) row[1]).floatValue());
-//            venta.setDetalles(new ArrayList<>());
-//            ventas.put(venta.getVentaId(), venta);
-//        }
-//
-//        String filtroDetalle = ventaId == null ? "" : " where venta_id = :ventaId";
-//        Query detallesQuery = entityManager.createNativeQuery(
-//                "select venta_id, detalle_id, producto_id, cantidad_producto, "
-//                        + "coalesce(precio_unitario, 0), "
-//                        + "coalesce(subtotal, precio_unitario * cantidad_producto, 0) "
-//                        + "from detalle_venta" + filtroDetalle + " order by venta_id, detalle_id"
-//        );
-//        if (ventaId != null) {
-//            detallesQuery.setParameter("ventaId", ventaId);
-//        }
-//        List<?> detalleRows = detallesQuery.getResultList();
-//
-//        for (Object result : detalleRows) {
-//            Object[] row = (Object[]) result;
-//            VentasResponseDTO venta = ventas.get(((Number) row[0]).longValue());
-//            if (venta == null) {
-//                continue;
-//            }
-//
-//            DetalleVentaResponseDTO detalle = new DetalleVentaResponseDTO();
-//            detalle.setDetalleId(((Number) row[1]).longValue());
-//            detalle.setProductoId(((Number) row[2]).longValue());
-//            detalle.setCantidadProducto(row[3] == null ? null : ((Number) row[3]).intValue());
-//            detalle.setPrecioUnitario(((Number) row[4]).floatValue());
-//            detalle.setSubtotal(((Number) row[5]).floatValue());
-//            venta.getDetalles().add(detalle);
-//        }
-//
-//        return new ArrayList<>(ventas.values());
-//    }
+    public VentasResponseDTO createVentas(VentasRequestDTO ventasRequestDTO) {
+        Venta transformed = conversionService.convert(ventasRequestDTO, Venta.class);
 
-//    @Transactional
-//    public VentasResponseDTO create(VentasRequestDTO requestDTO) {
-//        validateRequest(requestDTO);
-//
-//        Venta venta = conversionService.convert(requestDTO, Venta.class);
-//        if (venta == null) {
-//            throw new VentasExceptions(APIError.BAD_FORMAT);
-//        }
-//
-//        calcularSubtotalesYTotal(venta);
-//
-//        Venta saved = ventasRepository.save(venta);
-//        return conversionService.convert(saved, VentasResponseDTO.class);
-//    }
-//
+        // Calcular el SUBtotal de la venta sumando los precios de los detalles
+        float subTotalFinal = 0;
+        float totalFinal = 0;
+        for (DetalleVenta detalle : Objects.requireNonNull(transformed).getDetalles()) {
+            subTotalFinal += detalle.getPrecioUnitario() * detalle.getCantidadProducto();
+            detalle.setSubtotal(subTotalFinal);
+            subTotalFinal = 0; // Reiniciar el subtotal para el siguiente detalle
+
+            // Calcular el total de la venta sumando los subtotales de los detalles
+            totalFinal += detalle.getSubtotal();
+        }
+
+        transformed.setTotal(totalFinal);
+
+        Venta saved = ventasRepository.save(Objects.requireNonNull(transformed));
+
+        return  conversionService.convert(saved, VentasResponseDTO.class);
+    }
+
 //    @Transactional
 //    public VentasResponseDTO update(Long id, VentasRequestDTO requestDTO) {
 //        if (id == null || id <= 0) {
@@ -136,18 +85,16 @@ public class VentasService {
 //        Venta saved = ventasRepository.save(existing);
 //        return conversionService.convert(saved, VentasResponseDTO.class);
 //    }
-//
-//    @Transactional
-//    public void delete(Long id) {
-//        if (id == null || id <= 0) {
-//            throw new VentasExceptions(APIError.VALIDATION_ERROR);
-//        }
-//        if (!ventasRepository.existsById(id)) {
-//            throw new VentasExceptions(APIError.RESOURCE_NOT_FOUND);
-//        }
-//        ventasRepository.deleteById(id);
-//    }
-//
+
+    @Transactional
+    public void deleteVenta(Long id) {
+        if (getVentasById(id) == null) {
+            throw new  VentasExceptions(APIError.RESOURCE_NOT_FOUND);
+        }
+
+        ventasRepository.deleteById(id);
+    }
+
 //    private void validateRequest(VentasRequestDTO requestDTO) {
 //        if (requestDTO == null || requestDTO.getDetalles() == null || requestDTO.getDetalles().isEmpty()) {
 //            throw new VentasExceptions(APIError.VALIDATION_ERROR);
