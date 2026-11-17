@@ -39,18 +39,7 @@ public class VentasService {
     public VentasResponseDTO createVentas(VentasRequestDTO ventasRequestDTO) {
         Venta transformed = conversionService.convert(ventasRequestDTO, Venta.class);
 
-        // Calcular el SUBtotal de la venta sumando los precios de los detalles
-        float subTotalFinal = 0;
-        float totalFinal = 0;
-        for (DetalleVenta detalle : Objects.requireNonNull(transformed).getDetalles()) {
-            subTotalFinal += detalle.getPrecioUnitario() * detalle.getCantidadProducto();
-            detalle.setSubtotal(subTotalFinal);
-            subTotalFinal = 0; // Reiniciar el subtotal para el siguiente detalle
-
-            // Calcular el total de la venta sumando los subtotales de los detalles
-            totalFinal += detalle.getSubtotal();
-        }
-
+        float totalFinal = calcularTotalAndSubTotal(transformed);
         transformed.setTotal(totalFinal);
 
         Venta saved = ventasRepository.save(Objects.requireNonNull(transformed));
@@ -58,33 +47,22 @@ public class VentasService {
         return  conversionService.convert(saved, VentasResponseDTO.class);
     }
 
-//    @Transactional
-//    public VentasResponseDTO update(Long id, VentasRequestDTO requestDTO) {
-//        if (id == null || id <= 0) {
-//            throw new VentasExceptions(APIError.VALIDATION_ERROR);
-//        }
-//
-//        Venta existing = ventasRepository.findById(id)
-//                .orElseThrow(() -> new VentasExceptions(APIError.RESOURCE_NOT_FOUND));
-//
-//        validateRequest(requestDTO);
-//
-//        Venta updatedData = conversionService.convert(requestDTO, Venta.class);
-//        if (updatedData == null) {
-//            throw new VentasExceptions(APIError.BAD_FORMAT);
-//        }
-//
-//        if (existing.getDetalles() == null) {
-//            existing.setDetalles(new ArrayList<>());
-//        } else {
-//            existing.getDetalles().clear();
-//        }
-//        existing.getDetalles().addAll(updatedData.getDetalles());
-//        calcularSubtotalesYTotal(existing);
-//
-//        Venta saved = ventasRepository.save(existing);
-//        return conversionService.convert(saved, VentasResponseDTO.class);
-//    }
+    @Transactional
+    public VentasResponseDTO updateVenta(Long id, VentasRequestDTO requestDTO) {
+        if (getVentasById(id) == null) {
+            throw new  VentasExceptions(APIError.RESOURCE_NOT_FOUND);
+        }
+
+        Venta transformed = conversionService.convert(requestDTO, Venta.class);
+        Objects.requireNonNull(transformed).setVentaId(id); // Establecer el ID de la venta existente para la actualización
+
+        float totalFinal = calcularTotalAndSubTotal(transformed);
+        transformed.setTotal(totalFinal);
+
+        Venta saved = ventasRepository.save(Objects.requireNonNull(transformed));
+
+        return conversionService.convert(saved, VentasResponseDTO.class);
+    }
 
     @Transactional
     public void deleteVenta(Long id) {
@@ -112,35 +90,18 @@ public class VentasService {
 //        }
 //    }
 
-    // Metodo para calcular los subtotales y el total de la venta V1
-//    private void calcularSubtotalesYTotal(Venta venta) {
-//        if (venta.getDetalles() != null) {
-//            for (DetalleVenta detalle : venta.getDetalles()) {
-//                detalle.setVenta(venta);
-//                if (detalle.getPrecioUnitario() != null && detalle.getCantidadProducto() != null) {
-//                    detalle.setSubtotal(
-//                            detalle.getPrecioUnitario()
-//                                    .multiply(BigDecimal.valueOf(detalle.getCantidadProducto()))
-//                    );
-//                }
-//            }
-//            BigDecimal total = venta.getDetalles().stream()
-//                    .map(d -> d.getSubtotal() != null ? d.getSubtotal() : BigDecimal.ZERO)
-//                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-//            venta.setTotal(total);
-//        }
-//    }
+    private float calcularTotalAndSubTotal (Venta venta) {
+        float subTotalFinal = 0;
+        float totalFinal = 0;
+        for (DetalleVenta detalle : Objects.requireNonNull(venta).getDetalles()) {
+            subTotalFinal += detalle.getPrecioUnitario() * detalle.getCantidadProducto();
+            detalle.setSubtotal(subTotalFinal);
+            subTotalFinal = 0; // Reiniciar el subtotal para el siguiente detalle
 
-    // Metodo para calcular los subtotales y el total de la venta V2
-//    private void calcularSubtotalesYTotal(Venta venta) {
-//        float subtotalTotal = (float) venta.getDetalles().stream()
-//                .mapToDouble(detalle -> {
-//                    detalle.setVenta(venta);
-//                    float subtotal = detalle.getPrecioUnitario() * detalle.getCantidadProducto();
-//                    detalle.setSubtotal(subtotal);
-//                    return subtotal;
-//                })
-//                .sum();
-//        venta.setTotal(subtotalTotal);
-//    }
+            // Calcular el total de la venta sumando los subtotales de los detalles
+            totalFinal += detalle.getSubtotal();
+        }
+
+        return totalFinal;
+    }
 }

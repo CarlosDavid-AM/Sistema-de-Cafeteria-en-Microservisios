@@ -36,10 +36,12 @@ public class VentasController {
         return new ResponseEntity<>(createdVenta, HttpStatus.CREATED);
     }
 
-//    @PutMapping("/{id}")
-//    public ResponseEntity<VentasResponseDTO> update(@PathVariable Long id, @RequestBody VentasRequestDTO requestDTO) {
-//        return ResponseEntity.ok(ventasService.update(id, requestDTO));
-//    }
+    @PutMapping("/{id}")
+    public ResponseEntity<VentasResponseDTO> updateVenta(@PathVariable Long id, @RequestBody VentasRequestDTO requestDTO) {
+        VentasResponseDTO response = ventasService.updateVenta(id, requestDTO);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
