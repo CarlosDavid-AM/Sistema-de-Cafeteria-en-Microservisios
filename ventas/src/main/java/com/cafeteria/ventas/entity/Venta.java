@@ -2,9 +2,8 @@ package com.cafeteria.ventas.entity;
 
 import jakarta.persistence.*;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "ventas")
@@ -15,11 +14,8 @@ public class Venta {
     @Column(name = "venta_id")
     private Long ventaId;
 
-    @OneToMany(
-            mappedBy = "venta",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "venta_id")
     private List<DetalleVenta> detalles;
 
     private float total;
@@ -32,4 +28,25 @@ public class Venta {
 
     public float getTotal() { return total; }
     public void setTotal(float total) { this.total = total; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Venta venta = (Venta) o;
+        return Float.compare(total, venta.total) == 0 && Objects.equals(ventaId, venta.ventaId) && Objects.equals(detalles, venta.detalles);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(ventaId, detalles, total);
+    }
+
+    @Override
+    public String toString() {
+        return "Venta{" +
+                "ventaId=" + ventaId +
+                ", detalles=" + detalles +
+                ", total=" + total +
+                '}';
+    }
 }

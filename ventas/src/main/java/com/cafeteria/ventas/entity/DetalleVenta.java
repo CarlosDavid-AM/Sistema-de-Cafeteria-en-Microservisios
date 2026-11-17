@@ -2,7 +2,7 @@ package com.cafeteria.ventas.entity;
 
 import jakarta.persistence.*;
 
-import java.math.BigDecimal;
+import java.util.Objects;
 
 @Entity
 @Table(name = "detalle_venta")
@@ -24,10 +24,6 @@ public class DetalleVenta {
 
     private float subtotal;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "venta_id")
-    private Venta venta;
-
     public Long getDetalleId() { return detalleId; }
     public void setDetalleId(Long detalleId) { this.detalleId = detalleId; }
 
@@ -43,6 +39,26 @@ public class DetalleVenta {
     public float getSubtotal() { return subtotal; }
     public void setSubtotal(float subtotal) { this.subtotal = subtotal; }
 
-    public Venta getVenta() { return venta; }
-    public void setVenta(Venta venta) { this.venta = venta; }
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        DetalleVenta that = (DetalleVenta) o;
+        return Float.compare(precioUnitario, that.precioUnitario) == 0 && Float.compare(subtotal, that.subtotal) == 0 && Objects.equals(detalleId, that.detalleId) && Objects.equals(productoId, that.productoId) && Objects.equals(cantidadProducto, that.cantidadProducto);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(detalleId, productoId, cantidadProducto, precioUnitario, subtotal);
+    }
+
+    @Override
+    public String toString() {
+        return "DetalleVenta{" +
+                "detalleId=" + detalleId +
+                ", productoId=" + productoId +
+                ", cantidadProducto=" + cantidadProducto +
+                ", precioUnitario=" + precioUnitario +
+                ", subtotal=" + subtotal +
+                '}';
+    }
 }

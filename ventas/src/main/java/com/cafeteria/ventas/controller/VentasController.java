@@ -21,27 +21,28 @@ public class VentasController {
 
     @GetMapping
     public ResponseEntity<List<VentasResponseDTO>> getAll() {
-        return ResponseEntity.ok(ventasService.getAll());
+        return ResponseEntity.ok(ventasService.getAllVentas());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<VentasResponseDTO> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(ventasService.getById(id));
+    public ResponseEntity<VentasResponseDTO> getVentasById(@PathVariable Long id) {
+        VentasResponseDTO venta = ventasService.getVentasById(id);
+        return new ResponseEntity<>(venta, HttpStatus.OK);
     }
 
-    @PostMapping
-    public ResponseEntity<VentasResponseDTO> create(@RequestBody VentasRequestDTO requestDTO) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(ventasService.create(requestDTO));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<VentasResponseDTO> update(@PathVariable Long id, @RequestBody VentasRequestDTO requestDTO) {
-        return ResponseEntity.ok(ventasService.update(id, requestDTO));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        ventasService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+//    @PostMapping
+//    public ResponseEntity<VentasResponseDTO> create(@RequestBody VentasRequestDTO requestDTO) {
+//        return ResponseEntity.status(HttpStatus.CREATED).body(ventasService.create(requestDTO));
+//    }
+//
+//    @PutMapping("/{id}")
+//    public ResponseEntity<VentasResponseDTO> update(@PathVariable Long id, @RequestBody VentasRequestDTO requestDTO) {
+//        return ResponseEntity.ok(ventasService.update(id, requestDTO));
+//    }
+//
+//    @DeleteMapping("/{id}")
+//    public ResponseEntity<Void> delete(@PathVariable Long id) {
+//        ventasService.delete(id);
+//        return ResponseEntity.noContent().build();
+//    }
 }
