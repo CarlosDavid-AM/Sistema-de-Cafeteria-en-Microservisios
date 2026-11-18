@@ -29,7 +29,7 @@ public class VentasService {
         this.productConnector = productConnector;
     }
 
-    // * Metodo de prueba*
+    // * Metodo de prueba *
     // Metodo para obtener los detalles de un producto
     public ProductDTO getProductById(Long productId) {
         return productConnector.getProductById(productId);
@@ -64,16 +64,14 @@ public class VentasService {
 
         VentasResponseDTO result =  conversionService.convert(saved, VentasResponseDTO.class);
 
-        Objects.requireNonNull(result).getDetalles().getFirst().setNombreProducto(productDTO.getProduct_name());
-
-        for (DetalleVentaResponseDTO detalleResponse : Objects.requireNonNull(result).getDetalles()) {
-            ProductDTO product = getProductById(detalleResponse.getProductoId());
-            detalleResponse.setNombreProducto(product.getProduct_name());
-        }
-
-        return result;
+        return enriquecerDetallesConNombreProducto(result);
     }
 
+
+    /**
+     * Solucionar el problema de acctualizar los detalles de la venta, ya que al actualizar una venta,
+     * los detalles no se actualizan correctamente.
+     */
     @Transactional
     public VentasResponseDTO updateVenta(Long id, VentasRequestDTO requestDTO) {
         if (getVentasById(id) == null) {
@@ -88,7 +86,9 @@ public class VentasService {
 
         Venta saved = ventasRepository.save(Objects.requireNonNull(transformed));
 
-        return conversionService.convert(saved, VentasResponseDTO.class);
+        VentasResponseDTO result = conversionService.convert(saved, VentasResponseDTO.class);
+
+        return enriquecerDetallesConNombreProducto(result);
     }
 
     @Transactional
@@ -98,6 +98,14 @@ public class VentasService {
         }
 
         ventasRepository.deleteById(id);
+    }
+
+    private VentasResponseDTO enriquecerDetallesConNombreProducto(VentasResponseDTO ventasResponseDTO) {
+        for (DetalleVentaResponseDTO detalleResponse : Objects.requireNonNull(ventasResponseDTO).getDetalles()) {
+            ProductDTO product = productConnector.getProductById(detalleResponse.getProductoId());
+            detalleResponse.setNombreProducto(product.getProduct_name());
+        }
+        return ventasResponseDTO;
     }
 
 //    private void validateRequest(VentasRequestDTO requestDTO) {
