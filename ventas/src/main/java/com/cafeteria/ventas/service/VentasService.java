@@ -1,6 +1,8 @@
 package com.cafeteria.ventas.service;
 
+import com.cafeteria.ventas.conector.ProductConnector;
 import com.cafeteria.ventas.dto.request.VentasRequestDTO;
+import com.cafeteria.ventas.dto.response.ProductDTO;
 import com.cafeteria.ventas.dto.response.VentasResponseDTO;
 import com.cafeteria.ventas.entity.DetalleVenta;
 import com.cafeteria.ventas.entity.Venta;
@@ -18,11 +20,18 @@ public class VentasService {
 
     private final VentasRepository ventasRepository;
     private final ConversionService conversionService;
+    private final ProductConnector productConnector;
 
-    public VentasService(VentasRepository ventasRepository, ConversionService conversionService) {
+    public VentasService(VentasRepository ventasRepository, ConversionService conversionService, ProductConnector productConnector) {
         this.ventasRepository = ventasRepository;
         this.conversionService = conversionService;
+        this.productConnector = productConnector;
     }
+
+    public ProductDTO getProductById(Long productId) {
+        return productConnector.getProductById(productId);
+    }
+
 
     @Transactional(readOnly = true)
     public List<VentasResponseDTO> getAllVentas() {

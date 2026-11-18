@@ -1,6 +1,7 @@
 package com.cafeteria.ventas.controller;
 
 import com.cafeteria.ventas.dto.request.VentasRequestDTO;
+import com.cafeteria.ventas.dto.response.ProductDTO;
 import com.cafeteria.ventas.dto.response.VentasResponseDTO;
 import com.cafeteria.ventas.service.VentasService;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,12 @@ public class VentasController {
 
     public VentasController(VentasService ventasService) {
         this.ventasService = ventasService;
+    }
+
+    // Endpoint de prueba
+    @GetMapping("/product/{productId}")
+    public ProductDTO getProductById(@PathVariable Long productId) {
+        return ventasService.getProductById(productId);
     }
 
     @GetMapping
