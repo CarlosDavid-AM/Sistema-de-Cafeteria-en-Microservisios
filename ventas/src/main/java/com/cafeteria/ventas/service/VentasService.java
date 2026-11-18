@@ -2,6 +2,7 @@ package com.cafeteria.ventas.service;
 
 import com.cafeteria.ventas.conector.ProductConnector;
 import com.cafeteria.ventas.dto.request.VentasRequestDTO;
+import com.cafeteria.ventas.dto.response.DetalleVentaResponseDTO;
 import com.cafeteria.ventas.dto.response.ProductDTO;
 import com.cafeteria.ventas.dto.response.VentasResponseDTO;
 import com.cafeteria.ventas.entity.DetalleVenta;
@@ -28,6 +29,8 @@ public class VentasService {
         this.productConnector = productConnector;
     }
 
+    // * Metodo de prueba*
+    // Metodo para obtener los detalles de un producto
     public ProductDTO getProductById(Long productId) {
         return productConnector.getProductById(productId);
     }
@@ -48,12 +51,27 @@ public class VentasService {
     public VentasResponseDTO createVentas(VentasRequestDTO ventasRequestDTO) {
         Venta transformed = conversionService.convert(ventasRequestDTO, Venta.class);
 
+        ProductDTO productDTO = getProductById(Objects.requireNonNull(transformed).getDetalles().getFirst().getProductoId());
+        for (DetalleVenta detalle : Objects.requireNonNull(transformed).getDetalles()) {
+            detalle.setPrecioUnitario(productDTO.getPrice());
+        }
+
+
         float totalFinal = calcularTotalAndSubTotal(transformed);
         transformed.setTotal(totalFinal);
 
         Venta saved = ventasRepository.save(Objects.requireNonNull(transformed));
 
-        return  conversionService.convert(saved, VentasResponseDTO.class);
+        VentasResponseDTO result =  conversionService.convert(saved, VentasResponseDTO.class);
+
+        Objects.requireNonNull(result).getDetalles().getFirst().setNombreProducto(productDTO.getProduct_name());
+
+        for (DetalleVentaResponseDTO detalleResponse : Objects.requireNonNull(result).getDetalles()) {
+            ProductDTO product = getProductById(detalleResponse.getProductoId());
+            detalleResponse.setNombreProducto(product.getProduct_name());
+        }
+
+        return result;
     }
 
     @Transactional
